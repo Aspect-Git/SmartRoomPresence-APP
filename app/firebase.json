@@ -1,0 +1,37 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "smart-room-presence",
+          "configurations": {
+            "ios": "1:859211088323:ios:34d444dd32f0676cd9fd76",
+            "macos": "1:859211088323:ios:34d444dd32f0676cd9fd76",
+            "web": "1:859211088323:web:74a5e486981d7cced9fd76"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

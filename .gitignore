@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Build and coverage output
+.DS_Store
+dist/
+build/
+coverage/
+.cache/
+.tmp/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+
+# Local tooling
+.codex/
+.agents/
+PrompPicture/
+
+# Project documentation: keep only the public repository overview.
+**/*.md
+!/README.md
+
+# Firmware and local credentials
+**/secrets.h
+**/*.token
+**/*.credentials
+**/firmware.bin
+**/.pio/
+app/build/
