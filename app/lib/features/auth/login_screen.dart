@@ -199,19 +199,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: RoomColors.ink,
-                            borderRadius:
-                                BorderRadius.circular(RoomShape.control),
-                          ),
-                          child: const Icon(
-                            Icons.sensors,
-                            color: RoomColors.coral,
-                            size: 24,
+                        ClipRRect(
+                          borderRadius:
+                              BorderRadius.circular(RoomShape.control),
+                          child: Image.asset(
+                            'assets/brand/room-app-icon.png',
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            semanticLabel: 'Smart Room app logo',
                           ),
                         ),
                         const SizedBox(width: 12),

@@ -26,3 +26,4 @@ flutter:
   assets:
     - assets/meeting-room.png
     - assets/room_app_icon.svg
+    - assets/brand/room-app-icon.png
