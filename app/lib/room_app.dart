@@ -31,7 +31,49 @@ class _RoomMaterialApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Smart Room Presence',
       theme: RoomTheme.light,
+      builder: (context, child) => _MobileWebShell(child: child!),
       home: const RoomExperience());
+}
+
+/// Keeps the web build phone-shaped on large screens while remaining full
+/// width on an actual phone or a narrow browser window.
+class _MobileWebShell extends StatelessWidget {
+  const _MobileWebShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final isWide = size.width > 600;
+    if (!isWide) return child;
+
+    return ColoredBox(
+      color: RoomColors.raised,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 430),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: RoomColors.canvas,
+              borderRadius: BorderRadius.circular(RoomShape.panel),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x22000000),
+                  blurRadius: 28,
+                  offset: Offset(0, 12),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(RoomShape.panel),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class RoomExperience extends StatefulWidget {
@@ -46,6 +88,7 @@ class _RoomExperienceState extends State<RoomExperience> {
   StreamSubscription<User?>? _authSub;
   Timer? _poll, _demoTimer;
   bool _checking = true,
+      _workspaceLoading = false,
       _demo = false,
       _deviceConfigured = false,
       _fahrenheit = false,
@@ -62,10 +105,12 @@ class _RoomExperienceState extends State<RoomExperience> {
       setState(() => _checking = false);
       if (user != null) {
         setState(() {
+          _workspaceLoading = true;
           _name = user.displayName ?? user.email?.split('@').first ?? 'User';
           _demo = false;
         });
         _loadWorkspace(user).then((_) {
+          if (mounted) setState(() => _workspaceLoading = false);
           if (mounted && FirebaseAuth.instance.currentUser?.uid == user.uid) {
             _startPolling();
           }
@@ -438,6 +483,11 @@ class _RoomExperienceState extends State<RoomExperience> {
                 isFresh: _selected == 0 && _fresh,
                 isDemo: _demo,
                 fahrenheit: _fahrenheit,
+                loading: _workspaceLoading ||
+                    (_deviceConfigured &&
+                        !_hasData &&
+                        _error == null &&
+                        !_demo),
                 error: _error,
                 onAddRoom: _addRoom,
                 onAddDevice: _addDevice,

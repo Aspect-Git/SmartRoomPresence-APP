@@ -1,7 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-/// Authenticated client for the Firebase callable functions that proxy
-/// ThingsBoard. ThingsBoard credentials never ship to the Flutter client.
+/// Authenticated client for Firebase callable functions that proxy ThingsBoard.
 class ThingsBoardService {
   final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
     region: 'europe-west1',

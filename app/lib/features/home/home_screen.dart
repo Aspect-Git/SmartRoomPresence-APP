@@ -14,6 +14,7 @@ class HomeScreen extends StatelessWidget {
     required this.isFresh,
     required this.isDemo,
     required this.fahrenheit,
+    this.loading = false,
     this.error,
     required this.onAddRoom,
     required this.onAddDevice,
@@ -27,6 +28,7 @@ class HomeScreen extends StatelessWidget {
   final bool isFresh;
   final bool isDemo;
   final bool fahrenheit;
+  final bool loading;
   final String? error;
   final VoidCallback onAddRoom;
   final VoidCallback onAddDevice;
@@ -99,89 +101,97 @@ class HomeScreen extends StatelessWidget {
           const RoomDemoNotice(),
         ],
         const SizedBox(height: 20),
-        RoomPanel(
-          padding: 20,
-          color: presence == true ? RoomColors.peach : RoomColors.surface,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: RoomText('Presence now',
+        _MotionIn(
+          delay: 0,
+          child: loading
+              ? const _PresenceSkeleton()
+              : RoomPanel(
+                  padding: 20,
+                  color:
+                      presence == true ? RoomColors.peach : RoomColors.surface,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: RoomText('Presence now',
+                                style: TextStyle(
+                                    color: RoomColors.secondary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500)),
+                          ),
+                          RoomStatusTag(
+                            label: connectionLabel,
+                            color: connectionColor,
+                            background: isDemo
+                                ? RoomColors.peach
+                                : isFresh
+                                    ? RoomColors.greenWash
+                                    : RoomColors.raised,
+                            icon: isDemo
+                                ? Icons.science_outlined
+                                : isFresh
+                                    ? Icons.check_circle_outline
+                                    : Icons.sensors_off_outlined,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(
+                            presence == null
+                                ? Icons.sensors_off_outlined
+                                : presence
+                                    ? Icons.sensors
+                                    : Icons.sensor_door_outlined,
+                            color: presence == true
+                                ? RoomColors.coralInk
+                                : RoomColors.muted,
+                            size: 30,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                RoomText(
+                                  presence == null
+                                      ? 'Waiting for radar data'
+                                      : presence
+                                          ? 'Presence detected'
+                                          : 'No presence detected',
+                                  style: const TextStyle(
+                                      color: RoomColors.ink,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 5),
+                                RoomText(
+                                  _rangeText(),
+                                  style: const TextStyle(
+                                      color: RoomColors.muted, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      const Divider(),
+                      const SizedBox(height: 12),
+                      const RoomText(
+                        'Presence sensing can report a target range. It does not identify or count people.',
                         style: TextStyle(
                             color: RoomColors.secondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500)),
+                            fontSize: 13,
+                            height: 1.45),
+                      ),
+                    ],
                   ),
-                  RoomStatusTag(
-                    label: connectionLabel,
-                    color: connectionColor,
-                    background: isDemo
-                        ? RoomColors.peach
-                        : isFresh
-                            ? RoomColors.greenWash
-                            : RoomColors.raised,
-                    icon: isDemo
-                        ? Icons.science_outlined
-                        : isFresh
-                            ? Icons.check_circle_outline
-                            : Icons.sensors_off_outlined,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    presence == null
-                        ? Icons.sensors_off_outlined
-                        : presence
-                            ? Icons.sensors
-                            : Icons.sensor_door_outlined,
-                    color: presence == true
-                        ? RoomColors.coralInk
-                        : RoomColors.muted,
-                    size: 30,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RoomText(
-                          presence == null
-                              ? 'Waiting for radar data'
-                              : presence
-                                  ? 'Presence detected'
-                                  : 'No presence detected',
-                          style: const TextStyle(
-                              color: RoomColors.ink,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 5),
-                        RoomText(
-                          _rangeText(),
-                          style: const TextStyle(
-                              color: RoomColors.muted, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              const Divider(),
-              const SizedBox(height: 12),
-              const RoomText(
-                'Presence sensing can report a target range. It does not identify or count people.',
-                style: TextStyle(
-                    color: RoomColors.secondary, fontSize: 13, height: 1.45),
-              ),
-            ],
-          ),
+                ),
         ),
         RoomSectionTitle(
           'Room conditions',
@@ -202,35 +212,49 @@ class HomeScreen extends StatelessWidget {
               children: [
                 SizedBox(
                     width: width,
-                    child: RoomMetricCard(
-                        label: 'Temperature',
-                        value: _temperature(),
-                        icon: Icons.thermostat_outlined)),
+                    child: loading
+                        ? const _MetricSkeleton()
+                        : _MotionIn(
+                            delay: 35,
+                            child: RoomMetricCard(
+                                label: 'Temperature',
+                                value: _temperature(),
+                                icon: Icons.thermostat_outlined))),
                 SizedBox(
                     width: width,
-                    child: RoomMetricCard(
-                        label: 'Humidity',
-                        value: _value('humidity_pct', '%'),
-                        icon: Icons.water_drop_outlined)),
+                    child: loading
+                        ? const _MetricSkeleton()
+                        : _MotionIn(
+                            delay: 75,
+                            child: RoomMetricCard(
+                                label: 'Humidity',
+                                value: _value('humidity_pct', '%'),
+                                icon: Icons.water_drop_outlined))),
                 SizedBox(
                     width: width,
-                    child: RoomMetricCard(
-                        label: 'Carbon dioxide',
-                        value: _value('co2_ppm', ' ppm'),
-                        detail: co2Critical
-                            ? 'Critical · ventilate now'
-                            : co2Elevated
-                                ? 'Elevated · consider ventilation'
-                                : co2 == null
-                                    ? null
-                                    : 'Air quality',
-                        icon: Icons.air_outlined)),
+                    child: loading
+                        ? const _MetricSkeleton()
+                        : _MotionIn(
+                            delay: 115,
+                            child: RoomMetricCard(
+                                label: 'Carbon dioxide',
+                                value: _value('co2_ppm', ' ppm'),
+                                detail: co2Critical
+                                    ? 'Critical · ventilate now'
+                                    : co2Elevated
+                                        ? 'Elevated · consider ventilation'
+                                        : null,
+                                icon: Icons.air_outlined))),
                 SizedBox(
                     width: width,
-                    child: RoomMetricCard(
-                        label: 'Illuminance',
-                        value: _value('lux', ' lx'),
-                        icon: Icons.light_mode_outlined)),
+                    child: loading
+                        ? const _MetricSkeleton()
+                        : _MotionIn(
+                            delay: 155,
+                            child: RoomMetricCard(
+                                label: 'Illuminance',
+                                value: _value('lux', ' lx'),
+                                icon: Icons.light_mode_outlined))),
               ],
             );
           },
@@ -247,49 +271,52 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
         const RoomSectionTitle('Device connection'),
-        RoomPanel(
-          padding: 16,
-          child: Column(
-            children: [
-              _connectionRow(
-                Icons.memory_outlined,
-                'Smart Room Presence board',
-                isDemo
-                    ? 'Simulated'
-                    : isFresh
-                        ? 'Connected'
-                        : 'No connection',
-              ),
-              if (hasData || isDemo) ...[
-                const Divider(height: 24),
+        _MotionIn(
+          delay: 200,
+          child: RoomPanel(
+            padding: 16,
+            child: Column(
+              children: [
                 _connectionRow(
-                  Icons.wifi_outlined,
-                  'Wi-Fi signal',
-                  _value('wifi_rssi', ' dBm'),
-                ),
-                const Divider(height: 24),
-                _connectionRow(
-                  Icons.cloud_outlined,
-                  'ThingsBoard',
+                  Icons.memory_outlined,
+                  'Smart Room Presence board',
                   isDemo
                       ? 'Simulated'
-                      : (telemetryBool(telemetry, 'mqtt_connected') ?? false)
+                      : isFresh
                           ? 'Connected'
-                          : 'Disconnected',
+                          : 'No connection',
                 ),
-              ],
-              if (!isFresh && !isDemo) ...[
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onAddDevice,
-                    icon: const Icon(Icons.bluetooth),
-                    label: const RoomText('Set up device over BLE'),
+                if (hasData || isDemo) ...[
+                  const Divider(height: 24),
+                  _connectionRow(
+                    Icons.wifi_outlined,
+                    'Wi-Fi signal',
+                    _value('wifi_rssi', ' dBm'),
                   ),
-                ),
+                  const Divider(height: 24),
+                  _connectionRow(
+                    Icons.cloud_outlined,
+                    'ThingsBoard',
+                    isDemo
+                        ? 'Simulated'
+                        : (telemetryBool(telemetry, 'mqtt_connected') ?? false)
+                            ? 'Connected'
+                            : 'Disconnected',
+                  ),
+                ],
+                if (!isFresh && !isDemo) ...[
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: onAddDevice,
+                      icon: const Icon(Icons.bluetooth),
+                      label: const RoomText('Set up device over BLE'),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
         if (error != null && !isDemo) ...[
@@ -324,7 +351,7 @@ class HomeScreen extends StatelessWidget {
                       : 'Waiting for device data'),
               children: [
                 _sensorStatusRow(
-                    'Air quality readings', 'CO₂ and temperature', 'scd40_ok'),
+                    'CO₂ readings', 'Carbon dioxide sensor', 'scd40_ok'),
                 const Divider(height: 20),
                 _sensorStatusRow('Room climate readings',
                     'Temperature and humidity', 'hdc2080_ok'),
@@ -384,4 +411,109 @@ class HomeScreen extends StatelessWidget {
       demo: isDemo,
     );
   }
+}
+
+class _MotionIn extends StatefulWidget {
+  const _MotionIn({required this.child, this.delay = 0});
+  final Widget child;
+  final int delay;
+
+  @override
+  State<_MotionIn> createState() => _MotionInState();
+}
+
+class _MetricSkeleton extends StatelessWidget {
+  const _MetricSkeleton();
+  @override
+  Widget build(BuildContext context) => const RoomPanel(
+        padding: 16,
+        child: SizedBox(
+          height: 86,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SkeletonBlock(width: 120, height: 14),
+              Spacer(),
+              _SkeletonBlock(width: 90, height: 26),
+            ],
+          ),
+        ),
+      );
+}
+
+class _PresenceSkeleton extends StatelessWidget {
+  const _PresenceSkeleton();
+  @override
+  Widget build(BuildContext context) => const RoomPanel(
+        padding: 20,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SkeletonBlock(width: 110, height: 14),
+            SizedBox(height: 24),
+            _SkeletonBlock(width: 205, height: 25),
+            SizedBox(height: 10),
+            _SkeletonBlock(width: 145, height: 13),
+            SizedBox(height: 24),
+            _SkeletonBlock(width: double.infinity, height: 1),
+            SizedBox(height: 16),
+            _SkeletonBlock(width: double.infinity, height: 30),
+          ],
+        ),
+      );
+}
+
+class _SkeletonBlock extends StatelessWidget {
+  const _SkeletonBlock({required this.width, required this.height});
+  final double width, height;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: RoomColors.raised,
+          borderRadius: BorderRadius.circular(RoomShape.compact),
+        ),
+      );
+}
+
+class _MotionInState extends State<_MotionIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: RoomMotion.enter,
+  );
+  late final Animation<double> _opacity = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOutCubic,
+  );
+  late final Animation<Offset> _slide = Tween<Offset>(
+    begin: const Offset(0, .035),
+    end: Offset.zero,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+  @override
+  void initState() {
+    super.initState();
+    _start();
+  }
+
+  Future<void> _start() async {
+    if (widget.delay > 0) {
+      await Future<void>.delayed(Duration(milliseconds: widget.delay));
+    }
+    if (mounted) _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: _opacity,
+        child: SlideTransition(position: _slide, child: widget.child),
+      );
 }

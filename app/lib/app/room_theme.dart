@@ -29,6 +29,7 @@ abstract final class RoomShape {
 abstract final class RoomMotion {
   static const quick = Duration(milliseconds: 150);
   static const standard = Duration(milliseconds: 220);
+  static const enter = Duration(milliseconds: 360);
 }
 
 abstract final class RoomTheme {

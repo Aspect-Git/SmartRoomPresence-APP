@@ -133,24 +133,132 @@ class InsightsScreen extends StatelessWidget {
             ]
           ])),
           const RoomSectionTitle('Recent records'),
-          RoomPanel(
-              child: points.isEmpty
-                  ? const RoomText('No records for this sensor yet.',
-                      style: TextStyle(color: RoomColors.muted))
-                  : Column(children: [
-                      for (final p in points.reversed.take(8))
-                        ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            title: RoomText(_format(p['value']),
-                                style: const TextStyle(
-                                    color: RoomColors.ink,
-                                    fontWeight: FontWeight.w500)),
-                            subtitle: RoomText(_time(p['ts']),
-                                style: const TextStyle(
-                                    fontSize: 12, color: RoomColors.muted)))
-                    ])),
+          _recentRecords(context, points),
         ]);
+  }
+
+  Widget _recentRecords(BuildContext context, List<Map> points) {
+    if (loading && points.isEmpty) return const _RecordsSkeleton();
+    if (points.isEmpty) {
+      return const RoomPanel(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10),
+          child: RoomText('No records for this sensor yet.',
+              style: TextStyle(color: RoomColors.muted)),
+        ),
+      );
+    }
+
+    final recent = points.reversed.take(8).toList(growable: false);
+    final groups = <String, List<Map>>{};
+    for (final point in recent) {
+      final date = DateTime.fromMillisecondsSinceEpoch(_timestamp(point['ts']));
+      final key = '${date.year}-${date.month}-${date.day}';
+      groups.putIfAbsent(key, () => []).add(point);
+    }
+
+    return AnimatedSwitcher(
+      duration: RoomMotion.standard,
+      child: RoomPanel(
+        key: ValueKey('$sensor-${recent.length}-${groups.keys.first}'),
+        padding: 16,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: RoomText('Newest first',
+                      style: TextStyle(
+                          color: RoomColors.muted,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
+                ),
+                Text('${recent.length}  ·  ${tr(context, 'records')}',
+                    style: const TextStyle(
+                        color: RoomColors.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            for (final group in groups.entries) ...[
+              Padding(
+                padding: const EdgeInsets.only(top: 12, bottom: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _dateLabel(group.value.first['ts']),
+                        style: const TextStyle(
+                            color: RoomColors.coralInk,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const Expanded(child: Divider()),
+                  ],
+                ),
+              ),
+              for (var i = 0; i < group.value.length; i++) ...[
+                _recordRow(group.value[i]),
+                if (i < group.value.length - 1) const Divider(height: 1),
+              ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _recordRow(Map point) {
+    final timestamp = _timestamp(point['ts']);
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp).toLocal();
+    final time =
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    return Semantics(
+      label: '${_format(point['value'])}, ${_time(point['ts'])}',
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 60,
+              child: Text(time,
+                  style: const TextStyle(
+                      color: RoomColors.secondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: [FontFeature.tabularFigures()])),
+            ),
+            Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(
+                  color: RoomColors.muted, shape: BoxShape.circle),
+            ),
+            const Spacer(),
+            Flexible(
+              child: SelectableText(
+                _format(point['value']),
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                    color: RoomColors.ink,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: [FontFeature.tabularFigures()]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _dateLabel(dynamic raw) {
+    final date = DateTime.fromMillisecondsSinceEpoch(_timestamp(raw)).toLocal();
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   List<Map> _points() {
@@ -343,4 +451,53 @@ class _HistoryPainter extends CustomPainter {
       old.sensor != sensor ||
       old.detectedLabel != detectedLabel ||
       old.clearLabel != clearLabel;
+}
+
+class _RecordsSkeleton extends StatelessWidget {
+  const _RecordsSkeleton();
+
+  @override
+  Widget build(BuildContext context) => RoomPanel(
+        padding: 16,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SkeletonLine(width: 116, height: 12),
+            const SizedBox(height: 18),
+            for (var i = 0; i < 4; i++) ...[
+              if (i == 2) ...[
+                const SizedBox(height: 12),
+                const _SkeletonLine(width: 82, height: 11),
+                const SizedBox(height: 4),
+              ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    const _SkeletonLine(width: 48, height: 14),
+                    const Spacer(),
+                    _SkeletonLine(width: i.isEven ? 88 : 68, height: 16),
+                  ],
+                ),
+              ),
+              if (i != 3) const Divider(height: 1),
+            ],
+          ],
+        ),
+      );
+}
+
+class _SkeletonLine extends StatelessWidget {
+  const _SkeletonLine({required this.width, required this.height});
+  final double width, height;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: RoomColors.raised,
+          borderRadius: BorderRadius.circular(RoomShape.compact),
+        ),
+      );
 }

@@ -14,7 +14,8 @@ if [ ! -x "${flutter_dir}/bin/flutter" ]; then
 fi
 
 export PATH="${flutter_dir}/bin:${PATH}"
-# Vercel may unpack Flutter with a different owner; Flutter invokes Git internally.
+# Vercel's build container may unpack Flutter with a different owner.
+# Flutter invokes Git internally, so explicitly trust this SDK directory.
 git config --global --add safe.directory "${flutter_dir}"
 flutter config --enable-web
 flutter pub get

@@ -231,6 +231,8 @@ const _thai = <String, String>{
   'Waiting for sensor history.': 'กำลังรอประวัติเซนเซอร์',
   'Latest readings': 'ค่าล่าสุด',
   'Recent records': 'รายการล่าสุด',
+  'Newest first': 'เรียงจากรายการล่าสุด',
+  'records': 'รายการ',
   'No records for this sensor yet.': 'ยังไม่มีข้อมูลของเซนเซอร์นี้',
   'No presence': 'ไม่พบการเคลื่อนไหว',
   'Detected': 'ตรวจพบ',

@@ -7,9 +7,10 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 import '../../app/room_theme.dart';
 import '../../room_language.dart';
+import '../../shared/room_panel.dart';
 
-const _coral = Color(0xFFFF592C);
-const _muted = Color(0xFF737373);
+const _coral = RoomColors.coral;
+const _muted = RoomColors.muted;
 const _serviceUuid = '2b8d0001-6b3a-4f7c-9e2d-1a0b5c6d7e80';
 const _configUuid = '2b8d0003-6b3a-4f7c-9e2d-1a0b5c6d7e80';
 const _statusUuid = '2b8d0004-6b3a-4f7c-9e2d-1a0b5c6d7e80';
@@ -31,6 +32,7 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
   String? _error;
   String _statusText = 'Your board will appear here after scanning.';
   bool _busy = false;
+  bool _scanning = false;
   bool _showPassword = false;
   bool _done = false;
 
@@ -47,6 +49,8 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
 
   Future<void> _scan() async {
     await _run(() async {
+      _scanning = true;
+      if (mounted) setState(() {});
       await FlutterBluePlus.stopScan();
       await _scanSubscription?.cancel();
       _foundDevices.clear();
@@ -84,6 +88,7 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
       }
       _statusText = 'Select the nearby Smart Room device.';
     });
+    if (mounted) setState(() => _scanning = false);
   }
 
   Future<void> _connectAndProvision() async {
@@ -205,28 +210,45 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 children: [
-                  const RoomText(
-                    'Bring your room online',
-                    style: TextStyle(
-                        fontSize: 27,
-                        height: 1.15,
-                        fontWeight: FontWeight.w600,
-                        color: RoomColors.ink),
-                  ),
-                  const SizedBox(height: 8),
-                  const RoomText(
-                    'Pair the board, then send your 2.4 GHz Wi-Fi details securely over Bluetooth.',
-                    style: TextStyle(color: RoomColors.secondary, height: 1.45),
+                  const RoomPanel(
+                    color: RoomColors.ink,
+                    borderColor: RoomColors.ink,
+                    padding: 22,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RoomStatusTag(
+                          label: 'DEVICE SETUP',
+                          color: Colors.white,
+                          background: Colors.white24,
+                          icon: Icons.sensors_outlined,
+                        ),
+                        SizedBox(height: 16),
+                        RoomText(
+                          'Bring your room online',
+                          style: TextStyle(
+                            fontSize: 25,
+                            height: 1.15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        RoomText(
+                          'Connect the board and send your 2.4 GHz Wi-Fi details securely over Bluetooth.',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 22),
                   _step(1, 'Prepare the board'),
                   const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: RoomColors.line)),
+                  RoomPanel(
+                    padding: 16,
                     child: Row(
                       children: [
                         Container(
@@ -251,26 +273,33 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
                   const SizedBox(height: 22),
                   _step(2, 'Connect to your board'),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _busy ? null : _scan,
-                      icon: _busy
-                          ? const SizedBox.square(
-                              dimension: 17,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Icons.bluetooth_searching),
-                      label:
-                          RoomText(_busy ? 'Scanning…' : 'Scan nearby devices'),
+                  AnimatedSwitcher(
+                    duration: RoomMotion.standard,
+                    child: SizedBox(
+                      key: ValueKey(_scanning),
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _busy ? null : _scan,
+                        icon: _scanning
+                            ? const SizedBox.square(
+                                dimension: 17, child: _PulseDot())
+                            : const Icon(Icons.bluetooth_searching),
+                        label: RoomText(_scanning
+                            ? 'Searching nearby…'
+                            : 'Scan nearby devices'),
+                      ),
                     ),
                   ),
+                  if (_scanning) ...[
+                    const SizedBox(height: 12),
+                    const _DeviceSkeleton(),
+                    const SizedBox(height: 8),
+                    const _DeviceSkeleton(),
+                  ],
                   if (_foundDevices.isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: RoomColors.line)),
+                    RoomPanel(
+                      padding: 4,
                       child: RadioGroup<String>(
                         groupValue: _device?.remoteId.str,
                         onChanged: (id) {
@@ -286,15 +315,25 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
                                     ? 'Good signal'
                                     : 'Weak signal';
                             final selected = _device?.remoteId.str == entry.key;
-                            return RadioListTile<String>(
-                              value: entry.key,
-                              enabled: !_busy,
-                              activeColor: _coral,
-                              title: const RoomText('Smart Room board'),
-                              subtitle: RoomText(
-                                  '$strength · ${entry.value.rssi} dBm'),
-                              selected: selected,
-                              secondary: const Icon(Icons.sensors_outlined),
+                            return AnimatedContainer(
+                              duration: RoomMotion.standard,
+                              decoration: BoxDecoration(
+                                color: selected
+                                    ? RoomColors.peach
+                                    : Colors.transparent,
+                                borderRadius:
+                                    BorderRadius.circular(RoomShape.control),
+                              ),
+                              child: RadioListTile<String>(
+                                value: entry.key,
+                                enabled: !_busy,
+                                activeColor: _coral,
+                                title: const RoomText('Smart Room board'),
+                                subtitle: RoomText(
+                                    '$strength · ${entry.value.rssi} dBm'),
+                                selected: selected,
+                                secondary: const Icon(Icons.sensors_outlined),
+                              ),
                             );
                           }).toList(),
                         ),
@@ -402,17 +441,90 @@ class _BleSetupScreenState extends State<BleSetupScreen> {
   Widget _message(String text, {required bool isError}) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isError ? const Color(0xFFFFEEE8) : const Color(0xFFEAF5EE),
+          color: isError ? RoomColors.peach : RoomColors.greenWash,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(isError ? Icons.error_outline : Icons.check_circle_outline,
-                color: isError ? _coral : const Color(0xFF21824C)),
+                color: isError ? _coral : RoomColors.green),
             const SizedBox(width: 10),
             Expanded(child: Text(text, style: const TextStyle(height: 1.4))),
           ],
+        ),
+      );
+}
+
+class _PulseDot extends StatefulWidget {
+  const _PulseDot();
+  @override
+  State<_PulseDot> createState() => _PulseDotState();
+}
+
+class _PulseDotState extends State<_PulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+        opacity: Tween<double>(begin: .25, end: 1).animate(_controller),
+        child: const Icon(Icons.bluetooth_searching, size: 18),
+      );
+}
+
+class _DeviceSkeleton extends StatelessWidget {
+  const _DeviceSkeleton();
+  @override
+  Widget build(BuildContext context) => RoomPanel(
+        padding: 16,
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: RoomColors.raised,
+                borderRadius: BorderRadius.circular(RoomShape.compact),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkeletonBar(width: 150, height: 13),
+                  SizedBox(height: 9),
+                  _SkeletonBar(width: 105, height: 10),
+                ],
+              ),
+            ),
+            const _SkeletonBar(width: 18, height: 18, radius: 9),
+          ],
+        ),
+      );
+}
+
+class _SkeletonBar extends StatelessWidget {
+  const _SkeletonBar(
+      {required this.width, required this.height, this.radius = 6});
+  final double width, height, radius;
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: RoomColors.raised,
+          borderRadius: BorderRadius.circular(radius),
         ),
       );
 }

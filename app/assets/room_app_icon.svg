@@ -1,19 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FFF9F2"/>
-      <stop offset="1" stop-color="#FFD9C6"/>
-    </linearGradient>
-    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#FF8A65"/>
-      <stop offset="1" stop-color="#D8482D"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF815D"/>
+      <stop offset="1" stop-color="#C83E25"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
-  <circle cx="512" cy="512" r="258" fill="#171513"/>
-  <circle cx="512" cy="512" r="72" fill="url(#signal)"/>
-  <path d="M322 420a270 270 0 0 0 0 184" fill="none" stroke="#FFF9F2" stroke-width="34" stroke-linecap="round"/>
-  <path d="M702 420a270 270 0 0 1 0 184" fill="none" stroke="#FFF9F2" stroke-width="34" stroke-linecap="round"/>
-  <path d="M386 468a154 154 0 0 0 0 88" fill="none" stroke="#FFF9F2" stroke-width="34" stroke-linecap="round"/>
-  <path d="M638 468a154 154 0 0 1 0 88" fill="none" stroke="#FFF9F2" stroke-width="34" stroke-linecap="round"/>
+  <rect width="1024" height="1024" rx="224" fill="url(#tile)"/>
+  <!-- A calm room outline, with a small sensor mark at its center. -->
+  <path d="M264 468 512 260l248 208v284a40 40 0 0 1-40 40H304a40 40 0 0 1-40-40V468Z"
+        fill="none" stroke="#FFF8F3" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M420 792V600a92 92 0 0 1 184 0v192" fill="none" stroke="#FFF8F3" stroke-width="42" stroke-linecap="round"/>
+  <circle cx="512" cy="570" r="28" fill="#FFD3B7"/>
 </svg>
